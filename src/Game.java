@@ -7,7 +7,10 @@ public class Game extends JPanel implements KeyListener {
 
     private PlayerChar player;
 
-    public Game(){
+    //represent playing field as 2D-Array to allow less ressource intensive calculations
+    private int[][] playingField;
+
+    public Game() {
         JFrame frame = new JFrame("This is my platform game");
 
         //sets frame to fullscreen
@@ -25,6 +28,24 @@ public class Game extends JPanel implements KeyListener {
         //addKeyListener
         frame.addKeyListener(this);
 
+        //initialize array representing playing field
+        int width = frame.getWidth() / 10;
+        int height = frame.getHeight() / 10;
+
+        playingField = new int[width][height];
+
+        for (int[] rows : playingField) {
+            for (int j : rows) {
+                j = 0;
+            }
+        }
+
+        //TODO: remove this at some point
+        //print baseline for testing
+        int baseline = height / 2;
+        for(int i = 0; i < playingField.length; i++){
+            playingField[i][baseline] = 1;
+        }
 
         //sets frame to visible
         frame.setVisible(true);
@@ -34,12 +55,22 @@ public class Game extends JPanel implements KeyListener {
     }
 
     @Override
-    protected void paintComponent(Graphics g){
+    protected void paintComponent(Graphics g) {
 
         super.paintComponent(g);
 
         //paint player character, for now as a rectangle
         g.drawRect(player.getX(), player.getY(), 10, 10);
+
+        //draw platforms
+        for (int i = 0; i < playingField.length; i++) {
+            for (int j = 0; j < playingField[i].length; j++) {
+                if (playingField[i][j] == 1) {
+                    int xPos = i * 10, yPos = j * 10 + 10;
+                    g.drawLine(xPos, yPos, xPos + 10, yPos);
+                }
+            }
+        }
     }
 
     @Override
@@ -50,21 +81,28 @@ public class Game extends JPanel implements KeyListener {
     @Override
     public void keyPressed(KeyEvent e) {
 
-        switch(e.getKeyCode()){
+        int move_x = 0, move_y = 0;
+
+        switch (e.getKeyCode()) {
             case KeyEvent.VK_W:
-                player.move(0, -1);
-                System.out.println("moving up");
+                move_y = -1;
                 break;
             case KeyEvent.VK_D:
-                player.move(1, 0);
-                System.out.println("moving right");
+                move_x = 1;
                 break;
             case KeyEvent.VK_A:
-                player.move(-1, 0);
-                System.out.println("moving left");
+                move_x = -1;
+                break;
+            case KeyEvent.VK_S:
+                move_y = 1;
                 break;
         }
+        int xPos = player.getX() / 10, yPos = player.getY() / 10;
+        if(move_y > 0 && playingField[xPos][yPos] == 1){
+            move_y = 0;
+        }
 
+        player.move(move_x, move_y);
         this.repaint();
     }
 
