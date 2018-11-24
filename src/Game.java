@@ -1,14 +1,20 @@
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 
-public class Game extends JPanel implements KeyListener {
+public class Game extends JPanel implements KeyListener, ActionListener {
 
     private PlayerChar player;
 
     //represent playing field as 2D-Array to allow less ressource intensive calculations
-    private int[][] playingField;
+    private float[][] playingField;
+
+
+    //the following variables all relate to player movement and may need to be set up in a seperate class at some point
+    private float moveX, moveY, velocityX, velocityY, gravity = 0.01f, timeElapsed = 0;
 
     public Game() {
         JFrame frame = new JFrame("This is my platform game");
@@ -32,10 +38,10 @@ public class Game extends JPanel implements KeyListener {
         int width = frame.getWidth() / 10;
         int height = frame.getHeight() / 10;
 
-        playingField = new int[width][height];
+        playingField = new float[width][height];
 
-        for (int[] rows : playingField) {
-            for (int j : rows) {
+        for (float[] rows : playingField) {
+            for (float j : rows) {
                 j = 0;
             }
         }
@@ -43,7 +49,7 @@ public class Game extends JPanel implements KeyListener {
         //TODO: remove this at some point
         //print baseline for testing
         int baseline = height / 2;
-        for(int i = 0; i < playingField.length; i++){
+        for (int i = 0; i < playingField.length; i++) {
             playingField[i][baseline] = 1;
         }
 
@@ -52,6 +58,10 @@ public class Game extends JPanel implements KeyListener {
 
         //creates playerCharacter
         player = new PlayerChar(10, 10);
+
+        //initializes Swing Timer for actions and refresh
+        Timer gameTimer = new Timer(1, this);
+        gameTimer.start();
     }
 
     @Override
@@ -60,7 +70,7 @@ public class Game extends JPanel implements KeyListener {
         super.paintComponent(g);
 
         //paint player character, for now as a rectangle
-        g.drawRect(player.getX(), player.getY(), 10, 10);
+        g.drawRect((int) player.getX(), (int) player.getY(), 10, 10);
 
         //draw platforms
         for (int i = 0; i < playingField.length; i++) {
@@ -81,33 +91,51 @@ public class Game extends JPanel implements KeyListener {
     @Override
     public void keyPressed(KeyEvent e) {
 
-        int move_x = 0, move_y = 0;
-
         switch (e.getKeyCode()) {
             case KeyEvent.VK_W:
-                move_y = -1;
+                velocityY = -12.0f;
                 break;
             case KeyEvent.VK_D:
-                move_x = 1;
+                moveX = 1;
                 break;
             case KeyEvent.VK_A:
-                move_x = -1;
+                moveX = -1;
                 break;
             case KeyEvent.VK_S:
-                move_y = 1;
+                moveY = 1;
                 break;
         }
-        int xPos = player.getX() / 10, yPos = player.getY() / 10;
-        if(move_y > 0 && playingField[xPos][yPos] == 1){
-            move_y = 0;
-        }
 
-        player.move(move_x, move_y);
-        this.repaint();
+        //if (move_y > 0 && playingField[xPos][yPos] == 1) {
+        //    move_y = 0;
+        //}
     }
 
     @Override
     public void keyReleased(KeyEvent e) {
 
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        //int xPos = (int) player.getX() / 10, yPos = (int) player.getY() / 10;
+
+        int xPos = (int) (player.getX() / 10), yPos = (int) (player.getY() / 10);
+
+        if(playingField[xPos][yPos] != 1){
+            timeElapsed += 0.001f;
+            moveY += velocityY * timeElapsed;
+            velocityY += gravity * timeElapsed;
+        } else{
+            timeElapsed = 0;
+            velocityY = 0;
+            moveY = 0;
+        }
+
+        player.move(moveX, moveY);
+        moveX = 0;
+        moveY = 0;
+
+        repaint();
     }
 }
